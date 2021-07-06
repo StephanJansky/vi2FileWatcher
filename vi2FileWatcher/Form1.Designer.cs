@@ -31,12 +31,12 @@ namespace vi2FileWatcher
         {
             this.btnWatch = new System.Windows.Forms.Button();
             this.txtFileToWatch = new System.Windows.Forms.TextBox();
-            this.lstLog = new System.Windows.Forms.ListBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.txtFilter = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.chkInclSubDirs = new System.Windows.Forms.CheckBox();
+            this.lstViewLog = new System.Windows.Forms.ListView();
             this.SuspendLayout();
             // 
             // btnWatch
@@ -57,14 +57,6 @@ namespace vi2FileWatcher
             this.txtFileToWatch.Size = new System.Drawing.Size(458, 20);
             this.txtFileToWatch.TabIndex = 1;
             this.txtFileToWatch.Text = "C:\\";
-            // 
-            // lstLog
-            // 
-            this.lstLog.FormattingEnabled = true;
-            this.lstLog.Location = new System.Drawing.Point(12, 64);
-            this.lstLog.Name = "lstLog";
-            this.lstLog.Size = new System.Drawing.Size(539, 381);
-            this.lstLog.TabIndex = 2;
             // 
             // btnBrowse
             // 
@@ -103,16 +95,29 @@ namespace vi2FileWatcher
             this.chkInclSubDirs.Text = "Include Subdirectories";
             this.chkInclSubDirs.UseVisualStyleBackColor = true;
             // 
+            // lstViewLog
+            // 
+            this.lstViewLog.FullRowSelect = true;
+            this.lstViewLog.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.lstViewLog.HideSelection = false;
+            this.lstViewLog.Location = new System.Drawing.Point(12, 64);
+            this.lstViewLog.MultiSelect = false;
+            this.lstViewLog.Name = "lstViewLog";
+            this.lstViewLog.Size = new System.Drawing.Size(536, 374);
+            this.lstViewLog.TabIndex = 7;
+            this.lstViewLog.UseCompatibleStateImageBehavior = false;
+            this.lstViewLog.View = System.Windows.Forms.View.List;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(560, 450);
+            this.Controls.Add(this.lstViewLog);
             this.Controls.Add(this.chkInclSubDirs);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.txtFilter);
             this.Controls.Add(this.btnBrowse);
-            this.Controls.Add(this.lstLog);
             this.Controls.Add(this.txtFileToWatch);
             this.Controls.Add(this.btnWatch);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -129,12 +134,12 @@ namespace vi2FileWatcher
 
         private System.Windows.Forms.Button btnWatch;
         private System.Windows.Forms.TextBox txtFileToWatch;
-        private System.Windows.Forms.ListBox lstLog;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.Button btnBrowse;
         private System.Windows.Forms.TextBox txtFilter;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox chkInclSubDirs;
+        private System.Windows.Forms.ListView lstViewLog;
     }
 }
 

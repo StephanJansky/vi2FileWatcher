@@ -22,7 +22,6 @@ namespace vi2FileWatcher
         public event dNewFileLogEntry eNewFileLogEntry;
         public StreamWriter sr_LogFile = null;
 
-
         static private string p_strLastMessage = "";
 
         public Form1()
@@ -44,19 +43,21 @@ namespace vi2FileWatcher
             else
                 sr_LogFile = new StreamWriter("vi2FileWatcher.log");
 
-            sr_LogFile.WriteLine(DateTime.Now.Date + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+            sr_LogFile.WriteLine(DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
             sr_LogFile.Close();
         }
 
         private void Form1_eNewLogEntry(string strLogEntry)
         {
-            if (lstLog.InvokeRequired)
+            if (lstViewLog.InvokeRequired)
             {
-                lstLog.Invoke(new MethodInvoker(() => { Form1_eNewLogEntry(strLogEntry); }));
+                lstViewLog.Invoke(new MethodInvoker(() => { Form1_eNewLogEntry(strLogEntry); }));
                 return;
             }
 
-            lstLog.Items.Add(DateTime.Now.Date + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+            lstViewLog.Items.Add(DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+            if ( lstViewLog.Items.Count > 1 )
+                lstViewLog.Items[lstViewLog.Items.Count - 1].EnsureVisible();
         }
 
         private void Form1_eWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile)
@@ -116,7 +117,7 @@ namespace vi2FileWatcher
             {
                 if (String.IsNullOrEmpty(txtFileToWatch.Text))
                 {
-                    lstLog.Items.Add("File to watch is EMPTY!");
+                    this.eNewLogEntry("Folder to watch is EMPTY!");
                     return;
                 }
 
@@ -154,7 +155,7 @@ namespace vi2FileWatcher
                 fs_Watcher.Dispose();
                 fs_Watcher = null;
                 btnWatch.Text = "Watch";
-                lstLog.Items.Add("Stopped watching.");
+                this.eNewLogEntry("Stopped watching.");
                 this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
                 sr_LogFile = null;
             }

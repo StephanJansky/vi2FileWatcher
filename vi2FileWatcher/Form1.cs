@@ -14,9 +14,16 @@ namespace vi2FileWatcher
     public partial class Form1 : Form
     {
         private FileSystemWatcher fs_Watcher = null;
-        public delegate void dWatcherNotificationEvent(string strMessage);
+        public delegate void dWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile);
         public event dWatcherNotificationEvent eWatcherNotificationEvent;
+        public delegate void dNewLogEntry(string strLogEntry);
+        public event dNewLogEntry eNewLogEntry;
+        public delegate void dNewFileLogEntry(string strLogEntry);
+        public event dNewFileLogEntry eNewFileLogEntry;
         public StreamWriter sr_LogFile = null;
+
+
+        static private string p_strLastMessage = "";
 
         public Form1()
         {
@@ -26,51 +33,81 @@ namespace vi2FileWatcher
         private void Form1_Load(object sender, EventArgs e)
         {
             this.eWatcherNotificationEvent += Form1_eWatcherNotificationEvent;
+            this.eNewLogEntry += Form1_eNewLogEntry;
+            this.eNewFileLogEntry += Form1_eNewFileLogEntry;
         }
 
-        private void Form1_eWatcherNotificationEvent(string strMessage)
+        private void Form1_eNewFileLogEntry(string strLogEntry)
+        {
+            if (System.IO.File.Exists("vi2FileWatcher.log"))
+                sr_LogFile = System.IO.File.AppendText("vi2FileWatcher.log");
+            else
+                sr_LogFile = new StreamWriter("vi2FileWatcher.log");
+
+            sr_LogFile.WriteLine(DateTime.Now.Date + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+            sr_LogFile.Close();
+        }
+
+        private void Form1_eNewLogEntry(string strLogEntry)
         {
             if (lstLog.InvokeRequired)
             {
-                lstLog.Invoke(new MethodInvoker(() => { Form1_eWatcherNotificationEvent(strMessage); }));
+                lstLog.Invoke(new MethodInvoker(() => { Form1_eNewLogEntry(strLogEntry); }));
                 return;
             }
 
-            lstLog.Items.Add(strMessage);
-            sr_LogFile.WriteLine(strMessage);
+            lstLog.Items.Add(DateTime.Now.Date + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+        }
+
+        private void Form1_eWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile)
+        {
+            string strMessage = "";
+            strMessage += eChangeType.ToString() + " - " + strFile;
+
+            if ( eChangeType != WatcherChangeTypes.Deleted )
+            {
+                FileAttributes attr = File.GetAttributes(strFile);
+                if ((attr & FileAttributes.Directory) != FileAttributes.Directory)
+                {
+                    FileInfo fsInfo = new FileInfo(strFile);
+                    strMessage += " (" + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte") + ")";
+                }
+                else
+                    return;
+            }
+
+            if (strMessage != p_strLastMessage)
+            {
+                this.eNewLogEntry(strMessage);
+                this.eNewFileLogEntry(strMessage);
+            }
+
+            p_strLastMessage = strMessage;
         }
 
         private void Fs_Watcher_Error(object sender, ErrorEventArgs e)
         {
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - File Error: " + e.GetException().Message);
+            this.eWatcherNotificationEvent(WatcherChangeTypes.All, e.GetException().Message);
         }
 
         private void Fs_Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            FileInfo fsInfo = new FileInfo(e.FullPath);
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + " was CREATED!");
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
+            this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void Fs_Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
-            FileInfo fsInfo = new FileInfo(e.FullPath);
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + " was DELETED!");
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
+            this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void Fs_Watcher_Renamed(object sender, RenamedEventArgs e)
         {
-            FileInfo fsInfo = new FileInfo(e.FullPath);
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + " was RENAMED!");
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
+            this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void Fs_Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            FileInfo fsInfo = new FileInfo(e.FullPath);
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + " was CHANGED!");
-            this.eWatcherNotificationEvent(DateTime.Now.TimeOfDay + " - " + e.FullPath + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
+            this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void btnWatch_Click(object sender, EventArgs e)
@@ -82,15 +119,21 @@ namespace vi2FileWatcher
                     lstLog.Items.Add("File to watch is EMPTY!");
                     return;
                 }
-                sr_LogFile = new StreamWriter("vi2FileWatcher.log");
-                sr_LogFile.WriteLine("***Start: " + DateTime.Now + "***");
+
+                this.eNewFileLogEntry("***Start: " + DateTime.Now + "***");
+                if (chkInclSubDirs.Checked)
+                {
+                    this.eNewFileLogEntry("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                    this.eNewLogEntry("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                }
+                else
+                {
+                    this.eNewFileLogEntry("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                    this.eNewLogEntry("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                }
 
                 foreach (string strFile in System.IO.Directory.GetFiles(txtFileToWatch.Text) )
-                {
-                    FileInfo fsInfo = new FileInfo(strFile);
-                    this.eWatcherNotificationEvent(strFile + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
-                    lstLog.Items.Add(strFile + ": " + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte"));
-                }
+                    this.eWatcherNotificationEvent(WatcherChangeTypes.Changed, strFile);
 
                 fs_Watcher = new FileSystemWatcher(txtFileToWatch.Text);
                 fs_Watcher.NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.Security
@@ -104,16 +147,6 @@ namespace vi2FileWatcher
                 fs_Watcher.Created += Fs_Watcher_Created;
                 fs_Watcher.Error += Fs_Watcher_Error;
 
-                if (chkInclSubDirs.Checked)
-                {
-                    this.eWatcherNotificationEvent("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                    lstLog.Items.Add("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                }
-                else
-                {
-                    this.eWatcherNotificationEvent("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                    lstLog.Items.Add("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                }
                 btnWatch.Text = "STOP";
             }
             else
@@ -121,9 +154,8 @@ namespace vi2FileWatcher
                 fs_Watcher.Dispose();
                 fs_Watcher = null;
                 btnWatch.Text = "Watch";
-                lstLog.Items.Add("Stopped watching...");
-                sr_LogFile.WriteLine("***END: " + DateTime.Now + "***");
-                sr_LogFile.Close();
+                lstLog.Items.Add("Stopped watching.");
+                this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
                 sr_LogFile = null;
             }
         }
@@ -137,10 +169,10 @@ namespace vi2FileWatcher
             txtFileToWatch.Text = folderBrowserDialog1.SelectedPath;
         }
 
-        private void btnWatch_Leave(object sender, EventArgs e)
+        private void Form1_Leave(object sender, EventArgs e)
         {
-            if ( sr_LogFile != null )
-                sr_LogFile.WriteLine("***END: " + DateTime.Now + "***");
+            if (sr_LogFile != null)
+                this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
         }
     }
 }

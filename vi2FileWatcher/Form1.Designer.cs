@@ -48,7 +48,6 @@ namespace vi2FileWatcher
             this.btnWatch.Text = "Watch";
             this.btnWatch.UseVisualStyleBackColor = true;
             this.btnWatch.Click += new System.EventHandler(this.btnWatch_Click);
-            this.btnWatch.Leave += new System.EventHandler(this.btnWatch_Leave);
             // 
             // txtFileToWatch
             // 
@@ -116,9 +115,11 @@ namespace vi2FileWatcher
             this.Controls.Add(this.lstLog);
             this.Controls.Add(this.txtFileToWatch);
             this.Controls.Add(this.btnWatch);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "vi2FileWatcher";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Leave += new System.EventHandler(this.Form1_Leave);
             this.ResumeLayout(false);
             this.PerformLayout();
 

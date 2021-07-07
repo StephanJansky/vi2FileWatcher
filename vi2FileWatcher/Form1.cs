@@ -17,12 +17,12 @@ namespace vi2FileWatcher
         private FileSystemWatcher fs_Watcher = null;
         public delegate void dWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile);
         public event dWatcherNotificationEvent eWatcherNotificationEvent;
-        public delegate void dNewLogEntry(string strLogEntry);
+        public delegate void dNewLogEntry(WatcherChangeTypes eChangeType, string strFile, string strLogEntry);
         public event dNewLogEntry eNewLogEntry;
         public delegate void dNewFileLogEntry(string strLogEntry);
         public event dNewFileLogEntry eNewFileLogEntry;
         public StreamWriter sr_LogFile = null;
-        private Dictionary<string, List<string>> m_dFilesWatched = new Dictionary<string, List<string>>();
+        private List<FileWatched> m_lFiles = new List<FileWatched>();
 
         static private string p_strLastMessage = "";
 
@@ -49,15 +49,18 @@ namespace vi2FileWatcher
             sr_LogFile.Close();
         }
 
-        private void Form1_eNewLogEntry(string strLogEntry)
+        private void Form1_eNewLogEntry(WatcherChangeTypes eChangeType, string strFile, string strLogEntry)
         {
             if (lstViewLog.InvokeRequired)
             {
-                lstViewLog.Invoke(new MethodInvoker(() => { Form1_eNewLogEntry(strLogEntry); }));
+                lstViewLog.Invoke(new MethodInvoker(() => { Form1_eNewLogEntry(eChangeType, strFile, strLogEntry); }));
                 return;
             }
 
-            lstViewLog.Items.Add(DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
+            ListViewItem lstVCurItem = lstViewLog.Items.Add(DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second);
+            lstVCurItem.SubItems.Add(eChangeType.ToString());
+            lstVCurItem.SubItems.Add(strFile);
+            lstVCurItem.SubItems.Add(strLogEntry);
             if ( lstViewLog.Items.Count > 1 )
                 lstViewLog.Items[lstViewLog.Items.Count - 1].EnsureVisible();
 
@@ -67,27 +70,30 @@ namespace vi2FileWatcher
         private void Form1_eWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile)
         {
             string strMessage = "";
-            strMessage += eChangeType.ToString() + " - " + strFile;
+            string strDateTime = "";
+            FileWatched NewFile = new FileWatched(strFile);
 
             if ( eChangeType != WatcherChangeTypes.Deleted )
             {
                 FileAttributes attr = File.GetAttributes(strFile);
                 if ((attr & FileAttributes.Directory) != FileAttributes.Directory)
                 {
-                    FileInfo fsInfo = new FileInfo(strFile);
-                    strMessage += " (" + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte") + ")";
-                    m_dFilesWatched[strFile].Add(fsInfo.Length.ToString());
+                    strDateTime = DateTime.Now.ToString();
+                    if (m_lFiles.Contains(NewFile))
+                        m_lFiles[m_lFiles.FindIndex(x => x.Filename == NewFile.Filename)].AddValue();
+                    else
+                        m_lFiles.Add(new FileWatched(strFile));
                 }
                 else
                     return;
             }
 
-            if (strMessage != p_strLastMessage)
-            {
-                this.eNewLogEntry(strMessage);
-                this.eNewFileLogEntry(strMessage);
-                adaptGraph(m_dFilesWatched[strFile], strFile);
-            }
+            int iIndex = m_lFiles.FindIndex(x => x.Filename == NewFile.Filename);
+            this.eNewLogEntry(eChangeType, strFile, "New size is " + (m_lFiles[iIndex].LastValue > 1024 ? 
+                                                                      (m_lFiles[iIndex].LastValue / 1024).ToString() + " Kbyte" : 
+                                                                      m_lFiles[iIndex].LastValue.ToString() + " Byte"));
+            this.eNewFileLogEntry(strFile + ": " + strMessage);
+            // adaptGraph(m_lFiles[m_lFiles.FindIndex(x=> x.Filename == NewFile.Filename)]);
 
             p_strLastMessage = strMessage;
         }
@@ -99,14 +105,15 @@ namespace vi2FileWatcher
 
         private void Fs_Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            m_dFilesWatched.Add(e.FullPath, new List<string>());
+            m_lFiles.Add(new FileWatched(e.FullPath));
             this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void Fs_Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
             this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
-            m_dFilesWatched.Remove(e.FullPath);
+            int iIndex = m_lFiles.FindIndex(x => x.Filename == e.Name);
+            m_lFiles.RemoveAt(iIndex);
         }
 
         private void Fs_Watcher_Renamed(object sender, RenamedEventArgs e)
@@ -125,26 +132,26 @@ namespace vi2FileWatcher
             {
                 if (String.IsNullOrEmpty(txtFileToWatch.Text))
                 {
-                    this.eNewLogEntry("Folder to watch is EMPTY!");
+                    this.eNewLogEntry(WatcherChangeTypes.All, "<NONE>", "Folder to watch is EMPTY!");
                     return;
                 }
 
-                m_dFilesWatched.Clear();
+                m_lFiles.Clear();
                 this.eNewFileLogEntry("***Start: " + DateTime.Now + "***");
                 if (chkInclSubDirs.Checked)
                 {
                     this.eNewFileLogEntry("Watching Directory " + txtFileToWatch.Text + " and Subdirectories with Filter (" + txtFilter.Text + ")");
-                    this.eNewLogEntry("Watching Directory " + txtFileToWatch.Text + " and Subdirectories with Filter (" + txtFilter.Text + ")");
+                    this.eNewLogEntry(WatcherChangeTypes.All, "<NONE>", "Watching Directory " + txtFileToWatch.Text + " and Subdirectories with Filter (" + txtFilter.Text + ")");
                 }
                 else
                 {
                     this.eNewFileLogEntry("Watching Directory " + txtFileToWatch.Text + " with Filter (" + txtFilter.Text + ")");
-                    this.eNewLogEntry("Watching Directory " + txtFileToWatch.Text + " with Filter (" + txtFilter.Text + ")");
+                    this.eNewLogEntry(WatcherChangeTypes.All, "<NONE>", "Watching Directory " + txtFileToWatch.Text + " with Filter (" + txtFilter.Text + ")");
                 }
 
                 foreach (string strFile in System.IO.Directory.GetFiles(txtFileToWatch.Text))
                 {
-                    m_dFilesWatched.Add(strFile, new List<string>());
+                    m_lFiles.Add(new FileWatched(strFile));
                     this.eWatcherNotificationEvent(WatcherChangeTypes.Changed, strFile);
                 }
 
@@ -167,7 +174,8 @@ namespace vi2FileWatcher
                 fs_Watcher.Dispose();
                 fs_Watcher = null;
                 btnWatch.Text = "Watch";
-                this.eNewLogEntry("Stopped watching.");
+                chrtFileGraph.Series.Clear();
+                this.eNewLogEntry(WatcherChangeTypes.All, "<NONE>", "Stopped watching.");
                 this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
                 sr_LogFile = null;
             }
@@ -188,13 +196,39 @@ namespace vi2FileWatcher
                 this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
         }
 
-        private void adaptGraph(List<string> lValues, string strFile)
+        private void adaptGraph(FileWatched p_FileWatched)
         {
-            DataPoint pNewPoint = new DataPoint();
-            pNewPoint.YValues = lValues.Select(x => (double)Convert.ToDouble(x)).ToArray();
+            chrtFileGraph.Series.Clear();
+            chrtFileGraph.Series.Add("<DEFAULT>");
+            chrtFileGraph.Series[0].ChartType = SeriesChartType.Line;
+            chrtFileGraph.Series[0].Color = Color.Red;
+            chrtFileGraph.Series[0].IsValueShownAsLabel = true;
+            chrtFileGraph.Series[0].XValueType = ChartValueType.Time;
+            chrtFileGraph.Series[0].YValueType = ChartValueType.Double;
 
-            chrtFileGraph.Series[0].Name = strFile;
-            chrtFileGraph.Series[0].Points.Add(pNewPoint);
+            DataPoint pNewPoint = new DataPoint();
+            foreach (DateTime dtKey in p_FileWatched.Values.Keys)
+            {
+                string strTime = dtKey.Hour + ":" + dtKey.Minute + ":" + dtKey.Second;
+                pNewPoint.SetValueXY(strTime, p_FileWatched.Values[dtKey] > 1024 ? p_FileWatched.Values[dtKey] / 1024 : p_FileWatched.Values[dtKey]);
+                chrtFileGraph.Series[0].Points.Add(pNewPoint);
+            }
+
+            chrtFileGraph.Series[0].Name = p_FileWatched.Filename;
+        }
+
+        private void lstViewLog_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstViewLog.SelectedItems.Count > 0)
+            {
+                this.Width = 985;
+                string strFile = lstViewLog.SelectedItems[0].SubItems[2].Text;
+                int iIndex = m_lFiles.FindIndex(x => x.Fullname == strFile);
+                if ( iIndex > -1 )
+                    adaptGraph(m_lFiles[iIndex]);
+            }
+            else
+                this.Width = 570;
         }
     }
 }

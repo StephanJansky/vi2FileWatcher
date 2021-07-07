@@ -29,10 +29,9 @@ namespace vi2FileWatcher
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Title title1 = new System.Windows.Forms.DataVisualization.Charting.Title();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Title title3 = new System.Windows.Forms.DataVisualization.Charting.Title();
             this.btnWatch = new System.Windows.Forms.Button();
             this.txtFileToWatch = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
@@ -41,7 +40,10 @@ namespace vi2FileWatcher
             this.label1 = new System.Windows.Forms.Label();
             this.chkInclSubDirs = new System.Windows.Forms.CheckBox();
             this.lstViewLog = new System.Windows.Forms.ListView();
-            this.colLogEntry = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colDateTime = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colChgType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colChgFile = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colChgMsg = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chrtFileGraph = new System.Windows.Forms.DataVisualization.Charting.Chart();
             ((System.ComponentModel.ISupportInitialize)(this.chrtFileGraph)).BeginInit();
             this.SuspendLayout();
@@ -105,7 +107,10 @@ namespace vi2FileWatcher
             // lstViewLog
             // 
             this.lstViewLog.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.colLogEntry});
+            this.colDateTime,
+            this.colChgType,
+            this.colChgFile,
+            this.colChgMsg});
             this.lstViewLog.FullRowSelect = true;
             this.lstViewLog.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.lstViewLog.HideSelection = false;
@@ -116,44 +121,48 @@ namespace vi2FileWatcher
             this.lstViewLog.TabIndex = 7;
             this.lstViewLog.UseCompatibleStateImageBehavior = false;
             this.lstViewLog.View = System.Windows.Forms.View.Details;
+            this.lstViewLog.SelectedIndexChanged += new System.EventHandler(this.lstViewLog_SelectedIndexChanged);
             // 
-            // colLogEntry
+            // colDateTime
             // 
-            this.colLogEntry.Text = "Log Entry";
-            this.colLogEntry.Width = 532;
+            this.colDateTime.Text = "Date/Time";
+            this.colDateTime.Width = 113;
+            // 
+            // colChgType
+            // 
+            this.colChgType.Text = "ChangeType";
+            this.colChgType.Width = 84;
+            // 
+            // colChgFile
+            // 
+            this.colChgFile.Text = "File";
+            this.colChgFile.Width = 84;
+            // 
+            // colChgMsg
+            // 
+            this.colChgMsg.Text = "Message";
+            this.colChgMsg.Width = 250;
             // 
             // chrtFileGraph
             // 
             this.chrtFileGraph.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
-            chartArea1.Name = "ChartArea1";
-            this.chrtFileGraph.ChartAreas.Add(chartArea1);
-            legend1.Name = "Legend1";
-            this.chrtFileGraph.Legends.Add(legend1);
+            chartArea3.Name = "ChartArea1";
+            this.chrtFileGraph.ChartAreas.Add(chartArea3);
+            legend3.Name = "Legend1";
+            this.chrtFileGraph.Legends.Add(legend3);
             this.chrtFileGraph.Location = new System.Drawing.Point(558, 12);
             this.chrtFileGraph.Name = "chrtFileGraph";
             this.chrtFileGraph.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Grayscale;
-            series1.BackSecondaryColor = System.Drawing.Color.Black;
-            series1.BorderColor = System.Drawing.Color.Black;
-            series1.BorderWidth = 3;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Color = System.Drawing.Color.Red;
-            series1.IsValueShownAsLabel = true;
-            series1.Legend = "Legend1";
-            series1.Name = "<DEFAULT>";
-            series1.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Time;
-            series1.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Double;
-            this.chrtFileGraph.Series.Add(series1);
             this.chrtFileGraph.Size = new System.Drawing.Size(399, 426);
             this.chrtFileGraph.TabIndex = 8;
-            title1.Name = "Standard";
-            this.chrtFileGraph.Titles.Add(title1);
+            title3.Name = "Standard";
+            this.chrtFileGraph.Titles.Add(title3);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(969, 450);
+            this.ClientSize = new System.Drawing.Size(554, 450);
             this.Controls.Add(this.chrtFileGraph);
             this.Controls.Add(this.lstViewLog);
             this.Controls.Add(this.chkInclSubDirs);
@@ -183,8 +192,11 @@ namespace vi2FileWatcher
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox chkInclSubDirs;
         private System.Windows.Forms.ListView lstViewLog;
-        private System.Windows.Forms.ColumnHeader colLogEntry;
+        private System.Windows.Forms.ColumnHeader colDateTime;
         private System.Windows.Forms.DataVisualization.Charting.Chart chrtFileGraph;
+        private System.Windows.Forms.ColumnHeader colChgType;
+        private System.Windows.Forms.ColumnHeader colChgFile;
+        private System.Windows.Forms.ColumnHeader colChgMsg;
     }
 }
 

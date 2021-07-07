@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace vi2FileWatcher
 {
@@ -21,6 +22,7 @@ namespace vi2FileWatcher
         public delegate void dNewFileLogEntry(string strLogEntry);
         public event dNewFileLogEntry eNewFileLogEntry;
         public StreamWriter sr_LogFile = null;
+        private Dictionary<string, List<string>> m_dFilesWatched = new Dictionary<string, List<string>>();
 
         static private string p_strLastMessage = "";
 
@@ -58,6 +60,8 @@ namespace vi2FileWatcher
             lstViewLog.Items.Add(DateTime.Now.Date.Day + "." + DateTime.Now.Date.Month + "." + DateTime.Now.Date.Year + " " + DateTime.Now.Hour + ":" + DateTime.Now.Minute + ":" + DateTime.Now.Second + " - " + strLogEntry);
             if ( lstViewLog.Items.Count > 1 )
                 lstViewLog.Items[lstViewLog.Items.Count - 1].EnsureVisible();
+
+            lstViewLog.Refresh();
         }
 
         private void Form1_eWatcherNotificationEvent(WatcherChangeTypes eChangeType, string strFile)
@@ -72,6 +76,7 @@ namespace vi2FileWatcher
                 {
                     FileInfo fsInfo = new FileInfo(strFile);
                     strMessage += " (" + (fsInfo.Length > 1024 ? fsInfo.Length / 1024 + " KByte" : fsInfo.Length + " Byte") + ")";
+                    m_dFilesWatched[strFile].Add(fsInfo.Length.ToString());
                 }
                 else
                     return;
@@ -81,6 +86,7 @@ namespace vi2FileWatcher
             {
                 this.eNewLogEntry(strMessage);
                 this.eNewFileLogEntry(strMessage);
+                adaptGraph(m_dFilesWatched[strFile], strFile);
             }
 
             p_strLastMessage = strMessage;
@@ -93,12 +99,14 @@ namespace vi2FileWatcher
 
         private void Fs_Watcher_Created(object sender, FileSystemEventArgs e)
         {
+            m_dFilesWatched.Add(e.FullPath, new List<string>());
             this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
         }
 
         private void Fs_Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
             this.eWatcherNotificationEvent(e.ChangeType, e.FullPath);
+            m_dFilesWatched.Remove(e.FullPath);
         }
 
         private void Fs_Watcher_Renamed(object sender, RenamedEventArgs e)
@@ -121,20 +129,24 @@ namespace vi2FileWatcher
                     return;
                 }
 
+                m_dFilesWatched.Clear();
                 this.eNewFileLogEntry("***Start: " + DateTime.Now + "***");
                 if (chkInclSubDirs.Checked)
                 {
-                    this.eNewFileLogEntry("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                    this.eNewLogEntry("Watching Directory and Subdirectories with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                    this.eNewFileLogEntry("Watching Directory " + txtFileToWatch.Text + " and Subdirectories with Filter (" + txtFilter.Text + ")");
+                    this.eNewLogEntry("Watching Directory " + txtFileToWatch.Text + " and Subdirectories with Filter (" + txtFilter.Text + ")");
                 }
                 else
                 {
-                    this.eNewFileLogEntry("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
-                    this.eNewLogEntry("Watching Directory with Filter (" + txtFilter.Text + "): " + txtFileToWatch.Text);
+                    this.eNewFileLogEntry("Watching Directory " + txtFileToWatch.Text + " with Filter (" + txtFilter.Text + ")");
+                    this.eNewLogEntry("Watching Directory " + txtFileToWatch.Text + " with Filter (" + txtFilter.Text + ")");
                 }
 
-                foreach (string strFile in System.IO.Directory.GetFiles(txtFileToWatch.Text) )
+                foreach (string strFile in System.IO.Directory.GetFiles(txtFileToWatch.Text))
+                {
+                    m_dFilesWatched.Add(strFile, new List<string>());
                     this.eWatcherNotificationEvent(WatcherChangeTypes.Changed, strFile);
+                }
 
                 fs_Watcher = new FileSystemWatcher(txtFileToWatch.Text);
                 fs_Watcher.NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.Security
@@ -174,6 +186,15 @@ namespace vi2FileWatcher
         {
             if (sr_LogFile != null)
                 this.eNewFileLogEntry("***END: " + DateTime.Now + "***");
+        }
+
+        private void adaptGraph(List<string> lValues, string strFile)
+        {
+            DataPoint pNewPoint = new DataPoint();
+            pNewPoint.YValues = lValues.Select(x => (double)Convert.ToDouble(x)).ToArray();
+
+            chrtFileGraph.Series[0].Name = strFile;
+            chrtFileGraph.Series[0].Points.Add(pNewPoint);
         }
     }
 }

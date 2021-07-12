@@ -29,9 +29,9 @@ namespace vi2FileWatcher
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Title title3 = new System.Windows.Forms.DataVisualization.Charting.Title();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Title title1 = new System.Windows.Forms.DataVisualization.Charting.Title();
             this.btnWatch = new System.Windows.Forms.Button();
             this.txtFileToWatch = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
@@ -146,23 +146,23 @@ namespace vi2FileWatcher
             // chrtFileGraph
             // 
             this.chrtFileGraph.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
-            chartArea3.Name = "ChartArea1";
-            this.chrtFileGraph.ChartAreas.Add(chartArea3);
-            legend3.Name = "Legend1";
-            this.chrtFileGraph.Legends.Add(legend3);
+            chartArea1.Name = "ChartArea1";
+            this.chrtFileGraph.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            this.chrtFileGraph.Legends.Add(legend1);
             this.chrtFileGraph.Location = new System.Drawing.Point(558, 12);
             this.chrtFileGraph.Name = "chrtFileGraph";
             this.chrtFileGraph.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Grayscale;
             this.chrtFileGraph.Size = new System.Drawing.Size(399, 426);
             this.chrtFileGraph.TabIndex = 8;
-            title3.Name = "Standard";
-            this.chrtFileGraph.Titles.Add(title3);
+            title1.Name = "Standard";
+            this.chrtFileGraph.Titles.Add(title1);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(554, 450);
+            this.ClientSize = new System.Drawing.Size(558, 450);
             this.Controls.Add(this.chrtFileGraph);
             this.Controls.Add(this.lstViewLog);
             this.Controls.Add(this.chkInclSubDirs);

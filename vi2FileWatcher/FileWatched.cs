@@ -39,13 +39,14 @@ namespace vi2FileWatcher
 
             strFullname = strFile;
             strFileName = strFile.Substring(strFile.LastIndexOf("\\") + 1);
-            strFilePath = strFile.Substring(0, strFile.LastIndexOf("\\") - 1);
+            strFilePath = strFile.Substring(0, strFile.LastIndexOf("\\")+1);
         }
 
         public void AddValue()
         {
             FileInfo fsInfo = new FileInfo(Path.Combine(strFilePath, strFileName));
-            dValues.Add(DateTime.Now, fsInfo.Length);
+            if ( !dValues.ContainsKey(DateTime.Now) )
+                dValues.Add(DateTime.Now, fsInfo.Length);
         }
 
         public Dictionary<DateTime, double> Values

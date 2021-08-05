@@ -265,6 +265,7 @@ namespace vi2FileWatcher
                 {
                     this.Width = 985;
                     string strFile = lstViewLog.SelectedItems[0].SubItems[2].Text.Replace("...", "");
+                    strFile = strFile.Replace("\\", "");
                     int iIndex = m_lFiles.FindIndex(x => x.Filename == strFile);
                     if (iIndex > -1)
                         adaptGraph(m_lFiles[iIndex], true);
